@@ -81,14 +81,10 @@ def add_water(input_pdb_file: str, output_pdb_file: str, top_file: str):
 
 
 def verify(pdb_file: str, top_file: str, mdp_file: str):
-    tmp_tpr = Path(pdb_file).parent.joinpath("tmp.tpr")
-    command = (
-        f"grompp -f {mdp_file} -c {pdb_file} -p {top_file} -o {tmp_tpr.as_posix()}"
-    )
-    process = subprocess.Popen(command, shell=True)
-    process.wait()
-    # Clean up tmp file
-    tmp_tpr.unlink()
+    with tempfile.NamedTemporaryFile() as tmp_tpr:
+        command = f"grompp -f {mdp_file} -c {pdb_file} -p {top_file} -o {tmp_tpr.name}"
+        process = subprocess.Popen(command, shell=True)
+        process.wait()
 
 
 def resolvate(
