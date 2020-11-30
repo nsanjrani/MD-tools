@@ -99,7 +99,7 @@ def resolvate(
             continue
 
         old_pdb_file = next(system_dir.glob("*.pdb"))
-        old_top_file = next(system_dir.glob("*.top"))
+        old_top_file = next(system_dir.glob("*.prmtop"))
 
         # Replicate output directory structure
         system_output_path = output_path.joinpath(system_dir.name)
@@ -139,8 +139,8 @@ def resolvate(
             print("new_top_file:", new_top_file)
 
             # TODO: dbg only
-            shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
-            shutil.copy2(tmp_top_file, new_top_file)
+            # shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
+            # shutil.copy2(tmp_top_file, new_top_file)
 
             gmx_to_amber(tmp_sol_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
 
