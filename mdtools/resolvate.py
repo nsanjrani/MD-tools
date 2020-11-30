@@ -129,6 +129,11 @@ def resolvate(
             print("Step 3: Verifying...")
             verify(tmp_pdb_file, tmp_top_file, mdp_file)
 
+            print("tmp_pdb_file:", tmp_pdb_file)
+            print("tmp_top_file:", tmp_top_file)
+            print("new_pdb_file:", new_pdb_file)
+            print("new_top_file:", new_top_file)
+
             gmx_to_amber(tmp_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
 
 
