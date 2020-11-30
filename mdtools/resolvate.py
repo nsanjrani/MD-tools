@@ -109,7 +109,11 @@ def resolvate(
 
         with tempfile.TemporaryDirectory() as tmpdir_name:
 
+            # Make temp files
             tmp_pdb_file = Path(tmpdir_name).joinpath(old_pdb_file.name).as_posix()
+            tmp_sol_pdb_file = (
+                Path(tmpdir_name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
+            )
             tmp_top_file = Path(tmpdir_name).joinpath(old_top_file.name).as_posix()
 
             amber_to_gmx(
@@ -125,7 +129,7 @@ def resolvate(
             print("Step 0: Defining PBC box...")
             define_pbc_box(tmp_pdb_file)
             print("Step 1: Adding water...")
-            add_water(tmp_pdb_file, tmp_pdb_file, tmp_top_file)
+            add_water(tmp_pdb_file, tmp_sol_pdb_file, tmp_top_file)
             print("Step 3: Verifying...")
             verify(tmp_pdb_file, tmp_top_file, mdp_file)
 
@@ -134,7 +138,7 @@ def resolvate(
             print("new_pdb_file:", new_pdb_file)
             print("new_top_file:", new_top_file)
 
-            gmx_to_amber(tmp_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
+            gmx_to_amber(tmp_sol_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
 
 
 if __name__ == "__main__":
