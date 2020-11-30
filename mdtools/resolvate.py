@@ -125,7 +125,7 @@ def resolvate(
             print("Step 0: Defining PBC box...")
             define_pbc_box(tmp_pdb_file)
             print("Step 1: Adding water...")
-            add_water(tmp_pdb_file, new_pdb_file, tmp_top_file)
+            add_water(tmp_pdb_file, tmp_pdb_file, tmp_top_file)
             print("Step 3: Verifying...")
             verify(tmp_pdb_file, tmp_top_file, mdp_file)
 
