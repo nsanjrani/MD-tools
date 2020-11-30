@@ -131,12 +131,16 @@ def resolvate(
             print("Step 1: Adding water...")
             add_water(tmp_pdb_file, tmp_sol_pdb_file, tmp_top_file)
             print("Step 3: Verifying...")
-            verify(tmp_pdb_file, tmp_top_file, mdp_file)
+            verify(tmp_sol_pdb_file, tmp_top_file, mdp_file)
 
-            print("tmp_pdb_file:", tmp_pdb_file)
+            print("tmp_sol_pdb_file:", tmp_sol_pdb_file)
             print("tmp_top_file:", tmp_top_file)
             print("new_pdb_file:", new_pdb_file)
             print("new_top_file:", new_top_file)
+
+            # TODO: dbg only
+            shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
+            shutil.copy2(tmp_top_file, new_top_file)
 
             gmx_to_amber(tmp_sol_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
 
