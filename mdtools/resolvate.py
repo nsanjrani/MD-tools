@@ -123,8 +123,12 @@ def resolvate(
                 tempfile.TemporaryFile(suffix=".pdb")
             ).name
             tmp_top_file = stack.enter_context(
-                tempfile.TemporaryFile(suffix=".pdb")
+                tempfile.TemporaryFile(suffix=".top")
             ).name
+
+            print(tmp_pdb_file)
+            print(tmp_sol_pdb_file)
+            print(tmp_top_file)
 
             amber_to_gmx(
                 old_pdb_file.as_posix(),
