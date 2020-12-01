@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 import subprocess
+import contextlib
 from pathlib import Path
 import parmed as pmd
 import MDAnalysis as mda
@@ -107,14 +108,23 @@ def resolvate(
         new_pdb_file = system_output_path.joinpath(old_pdb_file.name).as_posix()
         new_top_file = system_output_path.joinpath(old_top_file.name).as_posix()
 
-        with tempfile.TemporaryDirectory() as tmpdir_name:
-
+        with contextlib.ExitStack() as stack:
             # Make temp files
-            tmp_pdb_file = Path(tmpdir_name).joinpath(old_pdb_file.name).as_posix()
-            tmp_sol_pdb_file = (
-                Path(tmpdir_name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
-            )
-            tmp_top_file = Path(tmpdir_name).joinpath(old_top_file.name).as_posix()
+            # tmpdir_name = stack.enter_context(tempfile.TemporaryDirectory())
+            # tmp_pdb_file = Path(tmpdir_name).joinpath(old_pdb_file.name).as_posix()
+            # tmp_sol_pdb_file = (
+            #     Path(tmpdir_name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
+            # )
+            # tmp_top_file = Path(tmpdir_name).joinpath(old_top_file.name).as_posix()
+            tmp_pdb_file = stack.enter_context(
+                tempfile.TemporaryFile(suffix=".pdb")
+            ).name
+            tmp_sol_pdb_file = stack.enter_context(
+                tempfile.TemporaryFile(suffix=".pdb")
+            ).name
+            tmp_top_file = stack.enter_context(
+                tempfile.TemporaryFile(suffix=".pdb")
+            ).name
 
             amber_to_gmx(
                 old_pdb_file.as_posix(),
