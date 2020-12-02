@@ -111,12 +111,13 @@ def resolvate(
         with contextlib.ExitStack() as stack:
             # Make temp files
             tmpdir = stack.enter_context(tempfile.TemporaryDirectory())
-            tmp_pdb_file = Path(tmpdir.name).joinpath(old_pdb_file.name).as_posix()
+            print(tmpdir)
+            tmp_pdb_file = Path(tmpdir).joinpath(old_pdb_file.name).as_posix()
             tmp_sol_pdb_file = (
-                Path(tmpdir.name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
+                Path(tmpdir).joinpath(f"sol_{old_pdb_file.name}").as_posix()
             )
             tmp_top_file = (
-                Path(tmpdir.name)
+                Path(".").resolve()
                 .joinpath(old_top_file.name)
                 .with_suffix(".top")
                 .as_posix()
@@ -145,21 +146,18 @@ def resolvate(
             if is_strip_water:
                 strip_water(tmp_pdb_file, tmp_top_file)
 
+            top_trim(tmp_top_file)
+
             print("Step 0: Defining PBC box...")
             define_pbc_box(tmp_pdb_file)
-
-            # TODO: dbg only
-            shutil.copy2(tmp_pdb_file, new_pdb_file)
-            shutil.copy2(tmp_top_file, new_top_file)
-            exit()
 
             print("Step 1: Adding water...")
             add_water(tmp_pdb_file, tmp_sol_pdb_file, tmp_top_file)
 
             # TODO: dbg only
-            shutil.copy2(tmp_pdb_file, new_pdb_file)
-            shutil.copy2(tmp_top_file, new_top_file)
-            exit()
+            #shutil.copy(tmp_pdb_file, new_pdb_file)
+            #shutil.copy(tmp_top_file, new_top_file)
+            #exit()
 
             print("Step 3: Verifying...")
             verify(tmp_sol_pdb_file, tmp_top_file, mdp_file)
@@ -170,8 +168,8 @@ def resolvate(
             print("new_top_file:", new_top_file)
 
             # TODO: dbg only
-            shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
-            shutil.copy2(tmp_top_file, new_top_file)
+            #shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
+            #shutil.copy2(tmp_top_file, new_top_file)
 
             gmx_to_amber(tmp_sol_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
 
