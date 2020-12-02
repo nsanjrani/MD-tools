@@ -102,8 +102,11 @@ def resolvate(
         if not system_dir.is_dir():
             continue
 
-        old_pdb_file = next(system_dir.glob("*.pdb"))
-        old_top_file = next(system_dir.glob("*.prmtop"))
+        try:
+            old_pdb_file = next(system_dir.glob("*.pdb"))
+            old_top_file = next(system_dir.glob("*.prmtop"))
+        except StopIteration:
+            continue
 
         # Replicate output directory structure
         system_output_path = output_path.joinpath(system_dir.name)
