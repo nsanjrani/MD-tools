@@ -117,13 +117,13 @@ def resolvate(
             # )
             # tmp_top_file = Path(tmpdir_name).joinpath(old_top_file.name).as_posix()
             tmp_pdb_file = stack.enter_context(
-                tempfile.TemporaryFile(suffix=".pdb")
+                tempfile.NamedTemporaryFile(suffix=".pdb")
             ).name
             tmp_sol_pdb_file = stack.enter_context(
-                tempfile.TemporaryFile(suffix=".pdb")
+                tempfile.NamedTemporaryFile(suffix=".pdb")
             ).name
             tmp_top_file = stack.enter_context(
-                tempfile.TemporaryFile(suffix=".top")
+                tempfile.NamedTemporaryFile(suffix=".top")
             ).name
 
             print(tmp_pdb_file)
