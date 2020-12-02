@@ -1,3 +1,4 @@
+import uuid
 import shutil
 import tempfile
 import subprocess
@@ -64,7 +65,6 @@ def strip_water(pdb_file: str, top_file: str):
     mda_u = mda.Universe(pdb_file)
     no_sol = mda_u.select_atoms("not resname WAT")
     no_sol.write(pdb_file)
-    top_trim(top_file)
 
 
 def define_pbc_box(pdb_file: str):
@@ -94,6 +94,10 @@ def resolvate(
     # input_path is a directory, with several sub directories
     # each containing a seperate PDB and TOP files
 
+    # Cleans itself up
+    workdir = Path(".").resolve().joinpath(f"{uuid.uuid4()}")
+    workdir.mkdir()
+
     for system_dir in input_path.glob("*"):
         if not system_dir.is_dir():
             continue
@@ -114,11 +118,7 @@ def resolvate(
                 Path(tmpdir).joinpath(f"sol_{old_pdb_file.name}").as_posix()
             )
             tmp_top_file = (
-                Path(".")
-                .resolve()
-                .joinpath(old_top_file.name)
-                .with_suffix(".top")
-                .as_posix()
+                workdir.joinpath(old_top_file.name).with_suffix(".top").as_posix()
             )
 
             amber_to_gmx(
@@ -143,6 +143,13 @@ def resolvate(
             verify(tmp_sol_pdb_file, tmp_top_file, mdp_file)
 
             gmx_to_amber(tmp_sol_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
+
+            # Clean up topology files.
+            # Note: for some reason, gromax fails to handle topologies in the tmp directory.
+            for file_ in workdir.glob("*"):
+                file_.unlink()
+
+        workdir.rmdir()
 
 
 if __name__ == "__main__":
