@@ -82,7 +82,7 @@ def add_water(input_pdb_file: str, output_pdb_file: str, top_file: str):
 
 
 def verify(pdb_file: str, top_file: str, mdp_file: str):
-    with tempfile.NamedTemporaryFile() as tmp_tpr:
+    with tempfile.NamedTemporaryFile(suffix=".tpr") as tmp_tpr:
         command = f"grompp -f {mdp_file} -c {pdb_file} -p {top_file} -o {tmp_tpr.name}"
         process = subprocess.Popen(command, shell=True)
         process.wait()
