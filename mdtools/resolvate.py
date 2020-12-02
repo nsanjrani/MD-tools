@@ -110,21 +110,21 @@ def resolvate(
 
         with contextlib.ExitStack() as stack:
             # Make temp files
-            # tmpdir_name = stack.enter_context(tempfile.TemporaryDirectory())
-            # tmp_pdb_file = Path(tmpdir_name).joinpath(old_pdb_file.name).as_posix()
-            # tmp_sol_pdb_file = (
-            #     Path(tmpdir_name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
-            # )
-            # tmp_top_file = Path(tmpdir_name).joinpath(old_top_file.name).as_posix()
-            tmp_pdb_file = stack.enter_context(
-                tempfile.NamedTemporaryFile(suffix="_pdb.pdb")
-            ).name
-            tmp_sol_pdb_file = stack.enter_context(
-                tempfile.NamedTemporaryFile(suffix="_sol_pdb.pdb")
-            ).name
-            tmp_top_file = stack.enter_context(
-                tempfile.NamedTemporaryFile(suffix="_top.top")
-            ).name
+            tmpdir = stack.enter_context(tempfile.TemporaryDirectory())
+            tmp_pdb_file = Path(tmpdir.name).joinpath(old_pdb_file.name).as_posix()
+            tmp_sol_pdb_file = (
+                Path(tmpdir.name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
+            )
+            tmp_top_file = Path(tmpdir.name).joinpath(old_top_file.name).as_posix()
+            # tmp_pdb_file = stack.enter_context(
+            #     tempfile.NamedTemporaryFile(suffix="_pdb.pdb")
+            # ).name
+            # tmp_sol_pdb_file = stack.enter_context(
+            #     tempfile.NamedTemporaryFile(suffix="_sol_pdb.pdb")
+            # ).name
+            # tmp_top_file = stack.enter_context(
+            #     tempfile.NamedTemporaryFile(suffix="_top.top")
+            # ).name
 
             print(tmp_pdb_file)
             print(tmp_sol_pdb_file)
