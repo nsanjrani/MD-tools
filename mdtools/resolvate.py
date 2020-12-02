@@ -115,7 +115,12 @@ def resolvate(
             tmp_sol_pdb_file = (
                 Path(tmpdir.name).joinpath(f"sol_{old_pdb_file.name}").as_posix()
             )
-            tmp_top_file = Path(tmpdir.name).joinpath(old_top_file.name).as_posix()
+            tmp_top_file = (
+                Path(tmpdir.name)
+                .joinpath(old_top_file.name)
+                .with_suffix(".top")
+                .as_posix()
+            )
             # tmp_pdb_file = stack.enter_context(
             #     tempfile.NamedTemporaryFile(suffix="_pdb.pdb")
             # ).name
