@@ -153,8 +153,8 @@ def resolvate(
             print("new_top_file:", new_top_file)
 
             # TODO: dbg only
-            # shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
-            # shutil.copy2(tmp_top_file, new_top_file)
+            shutil.copy2(tmp_sol_pdb_file, new_pdb_file)
+            shutil.copy2(tmp_top_file, new_top_file)
 
             gmx_to_amber(tmp_sol_pdb_file, tmp_top_file, new_pdb_file, new_top_file)
 
