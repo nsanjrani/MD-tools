@@ -152,7 +152,7 @@ def resolvate(
             for file_ in workdir.glob("*"):
                 file_.unlink()
 
-        workdir.rmdir()
+    workdir.rmdir()
 
 
 if __name__ == "__main__":
