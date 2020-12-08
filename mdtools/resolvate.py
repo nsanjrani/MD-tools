@@ -157,8 +157,8 @@ def resolvate(
 
 if __name__ == "__main__":
 
-    input_path = Path("/homes/abrace/tmp/plpro_resolvate/")
-    output_path = Path("/homes/abrace/tmp/plpro_resolvate_done/")
+    input_path = Path("/homes/abrace/tmp/outlier_pdbs_tops/")
+    output_path = Path("/homes/abrace/tmp/outlier_pdbs_tops_done_2/")
     mdp_file = "/homes/abrace/src/resolvate/ions.mdp"
     is_strip_water = False
 
