@@ -97,8 +97,14 @@ def configure_simulation(
         platform = omm.Platform_getPlatformByName("OpenCL")
         platform_properties = {"DeviceIndex": str(gpu_index)}
 
-    # Select implicit or explicit solvent
-    args = (
+    # Select implicit or explicit solvent configuration
+    if solvent_type == "implicit":
+        handle = configure_amber_implicit
+    else:
+        assert solvent_type == "explicit"
+        handle = configure_amber_explicit
+
+    sim, coords = handle(
         pdb_file,
         top_file,
         dt_ps,
@@ -107,11 +113,6 @@ def configure_simulation(
         platform,
         platform_properties,
     )
-    if solvent_type == "implicit":
-        sim, coords = configure_amber_implicit(*args)
-    else:
-        assert solvent_type == "explicit"
-        sim, coords = configure_amber_explicit(*args)
 
     # Set simulation positions
     if coords.get_coordinates().shape[0] == 1:
