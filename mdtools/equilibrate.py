@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import shutil
 from pathlib import Path
 import simtk.unit as u
@@ -45,15 +46,16 @@ def equilibrate(
         )
     )
 
+    print("starting sim")
     # Run equilibration
     sim.step(nsteps)
 
 
 if __name__ == "__main__":
     # Directory containing subdirectories with PDB/TOP file pairs
-    input_path = Path("")
+    input_path = Path("/homes/abrace/tmp/plpro_outliers_top80")
     # Directory to write equilibrated PDB/TOPs to
-    output_path = Path("")
+    output_path = Path("/homes/abrace/tmp/plpro_outliers_top80_equil")
     # Solvent type; explicit or implicit
     solvent_type = "explicit"
     # GPU index (always 0)
@@ -75,7 +77,7 @@ if __name__ == "__main__":
         simulation_length_ns * u.nanosecond / log_interval_ps * u.picosecond
     )
 
-    for system_dir in input_path.iterdir():
+    for system_dir in tqdm(input_path.iterdir()):
         if not system_dir.is_dir():
             continue
 
@@ -83,13 +85,17 @@ if __name__ == "__main__":
         output_dir = output_path.joinpath(system_dir.name)
         output_dir.mkdir()
 
-        top_file = next(system_dir.glob("*.top"))
+        top_file = next(system_dir.glob("*.prmtop"))
         pdb_file = next(system_dir.glob("*.pdb"))
 
         # Copy topology file to output directory
         shutil.copy(top_file, output_dir)
         output_pdb = output_dir.joinpath(pdb_file.name)
         log_file = output_dir.joinpath("output.log")
+
+        print(top_file)
+        print(pdb_file)
+        print(output_dir)
 
         equilibrate(
             pdb_file.as_posix(),
