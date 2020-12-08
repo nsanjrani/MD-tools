@@ -61,21 +61,19 @@ if __name__ == "__main__":
     # GPU index (always 0)
     gpu_index = 0
     # Integration step
-    dt_ps = 0.0001
+    dt_ps = 0.0001 * u.picosecond
     # Temperature to run equilibration
     temperature_kelvin = 300
     # Heat bath friction coefficient
     heat_bath_friction_coef = 1.0
     # Length of equilibration
-    simulation_length_ns = 2
+    simulation_length_ns = 2 * u.nanosecond
     # Log to report every log_interval_ps picoseconds
-    log_interval_ps = 50
+    log_interval_ps = 50 * u.picosecond
 
     # Number of steps to run each simulation
-    nsteps = int(simulation_length_ns * u.nanosecond / dt_ps * u.picosecond)
-    log_steps = int(
-        simulation_length_ns * u.nanosecond / log_interval_ps * u.picosecond
-    )
+    nsteps = int(simulation_length_ns / dt_ps)
+    log_steps = int(simulation_length_ns / log_interval_ps)
 
     for system_dir in tqdm(input_path.iterdir()):
         if not system_dir.is_dir():
