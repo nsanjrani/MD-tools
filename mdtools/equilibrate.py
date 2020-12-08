@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+import simtk.unit as u
 import simtk.openmm.app as app
 from mdtools.openmm_utils import configure_simulation
 
@@ -7,9 +8,11 @@ from mdtools.openmm_utils import configure_simulation
 def equilibrate(
     pdb_file: str,
     top_file: str,
+    log_file: str,
     output_pdb: str,
     solvent_type: str,
     gpu_index: int,
+    log_steps: int,
     dt_ps: float,
     temperature_kelvin: float,
     heat_bath_friction_coef: float,
@@ -27,6 +30,20 @@ def equilibrate(
 
     # Report a PDB file at the end of equilibration
     sim.reporters.append(app.PDBReporter(output_pdb, nsteps))
+
+    # Configure simulation output log
+    sim.reporters.append(
+        app.StateDataReporter(
+            log_file,
+            log_steps,
+            step=True,
+            time=True,
+            speed=True,
+            potentialEnergy=True,
+            temperature=True,
+            totalEnergy=True,
+        )
+    )
 
     # Run equilibration
     sim.step(nsteps)
@@ -49,9 +66,14 @@ if __name__ == "__main__":
     heat_bath_friction_coef = 1.0
     # Length of equilibration
     simulation_length_ns = 2
+    # Log to report every log_interval_ps picoseconds
+    log_interval_ps = 50
 
     # Number of steps to run each simulation
-    nsteps = int(simulation_length_ns / dt_ps)
+    nsteps = int(simulation_length_ns * u.nanosecond / dt_ps * u.picosecond)
+    log_steps = int(
+        simulation_length_ns * u.nanosecond / log_interval_ps * u.picosecond
+    )
 
     for system_dir in input_path.iterdir():
         if not system_dir.is_dir():
@@ -67,13 +89,16 @@ if __name__ == "__main__":
         # Copy topology file to output directory
         shutil.copy(top_file, output_dir)
         output_pdb = output_dir.joinpath(pdb_file.name)
+        log_file = output_dir.joinpath("output.log")
 
         equilibrate(
             pdb_file.as_posix(),
             top_file.as_posix(),
+            log_file.as_posix(),
             output_pdb.as_posix(),
             solvent_type,
             gpu_index,
+            log_steps,
             dt_ps,
             temperature_kelvin,
             heat_bath_friction_coef,
