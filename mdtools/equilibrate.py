@@ -29,9 +29,6 @@ def equilibrate(
         heat_bath_friction_coef,
     )
 
-    # Report a PDB file at the end of equilibration
-    sim.reporters.append(app.PDBReporter(output_pdb, nsteps))
-
     # Configure simulation output log
     sim.reporters.append(
         app.StateDataReporter(
@@ -46,9 +43,13 @@ def equilibrate(
         )
     )
 
-    print("starting sim")
     # Run equilibration
     sim.step(nsteps)
+
+    # Report a PDB file at the end of equilibration
+    state = sim.context.getState(getPositions=True)
+    with open(output_pdb, "w") as f:
+        app.PDBFile.writeFile(sim.topology, state.getPositions(), f)
 
 
 if __name__ == "__main__":
@@ -67,13 +68,13 @@ if __name__ == "__main__":
     # Heat bath friction coefficient
     heat_bath_friction_coef = 1.0
     # Length of equilibration
-    simulation_length_ns = 2 * u.nanosecond
+    simulation_length_ns = 0.01 * u.nanosecond # 10 picoseconds
     # Log to report every log_interval_ps picoseconds
-    log_interval_ps = 50 * u.picosecond
+    log_interval_ps = 2.5 * u.picosecond
 
     # Number of steps to run each simulation
     nsteps = int(simulation_length_ns / dt_ps)
-    log_steps = int(simulation_length_ns / log_interval_ps)
+    log_steps = int(log_interval_ps / dt_ps)
 
     for system_dir in tqdm(input_path.iterdir()):
         if not system_dir.is_dir():
@@ -90,10 +91,6 @@ if __name__ == "__main__":
         shutil.copy(top_file, output_dir)
         output_pdb = output_dir.joinpath(pdb_file.name)
         log_file = output_dir.joinpath("output.log")
-
-        print(top_file)
-        print(pdb_file)
-        print(output_dir)
 
         equilibrate(
             pdb_file.as_posix(),
