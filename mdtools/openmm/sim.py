@@ -37,7 +37,9 @@ def configure_amber_implicit(
 
     # Congfigure integrator
     integrator = omm.LangevinIntegrator(
-        temperature_kelvin, heat_bath_friction_coef / u.picosecond, dt_ps
+        temperature_kelvin * u.kelvin,
+        heat_bath_friction_coef / u.picosecond,
+        dt_ps * u.picosecond,
     )
     integrator.setConstraintTolerance(0.00001)
 
@@ -69,9 +71,11 @@ def configure_amber_explicit(
 
     # Congfigure integrator
     integrator = omm.LangevinIntegrator(
-        temperature_kelvin, heat_bath_friction_coef / u.picosecond, dt_ps
+        temperature_kelvin * u.kelvin,
+        heat_bath_friction_coef / u.picosecond,
+        dt_ps * u.picosecond,
     )
-    system.addForce(omm.MonteCarloBarostat(1 * u.bar, temperature_kelvin))
+    system.addForce(omm.MonteCarloBarostat(1 * u.bar, temperature_kelvin * u.kelvin))
 
     sim = app.Simulation(
         top.topology, system, integrator, platform, platform_properties
