@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 import simtk.unit as u
 import simtk.openmm.app as app
-from mdtools.openmm_utils import configure_simulation
+from mdtools.openmm.sim import configure_simulation
 
 
 def equilibrate(
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # Heat bath friction coefficient
     heat_bath_friction_coef = 1.0
     # Length of equilibration
-    simulation_length_ns = 0.01 * u.nanosecond # 10 picoseconds
+    simulation_length_ns = 0.01 * u.nanosecond  # 10 picoseconds
     # Log to report every log_interval_ps picoseconds
     log_interval_ps = 2.5 * u.picosecond
 
