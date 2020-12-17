@@ -1,6 +1,7 @@
 import random
 import parmed
-from typing import Optional
+from typing import Optional, Tuple
+import simtk
 import simtk.unit as u
 import simtk.openmm as omm
 import simtk.openmm.app as app
@@ -12,9 +13,9 @@ def configure_amber_implicit(
     dt_ps: float,
     temperature_kelvin: float,
     heat_bath_friction_coef: float,
-    platform: omm.Platform,
+    platform: simtk.openmm.Platform,
     platform_properties: dict,
-):
+) -> Tuple[simtk.openmm.app.Simulation, parmed.Structure]:
 
     # Configure system
     if top_file:
@@ -57,9 +58,9 @@ def configure_amber_explicit(
     dt_ps: float,
     temperature_kelvin: float,
     heat_bath_friction_coef: float,
-    platform: omm.Platform,
+    platform: simtk.openmm.Platform,
     platform_properties: dict,
-):
+) -> Tuple[simtk.openmm.app.Simulation, parmed.Structure]:
 
     # Configure system
     top = parmed.load_file(top_file, xyz=pdb_file)
@@ -93,7 +94,7 @@ def configure_simulation(
     dt_ps: float,
     temperature_kelvin: float,
     heat_bath_friction_coef: float,
-):
+) -> simtk.openmm.app.Simulation:
     # Configure hardware
     try:
         platform = omm.Platform_getPlatformByName("CUDA")
