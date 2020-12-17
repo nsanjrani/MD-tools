@@ -1,5 +1,6 @@
 import random
 import parmed
+from typing import Optional
 import simtk.unit as u
 import simtk.openmm as omm
 import simtk.openmm.app as app
@@ -7,7 +8,7 @@ import simtk.openmm.app as app
 
 def configure_amber_implicit(
     pdb_file: str,
-    top_file: str,
+    top_file: Optional[str],
     dt_ps: float,
     temperature_kelvin: float,
     heat_bath_friction_coef: float,
@@ -82,7 +83,7 @@ def configure_amber_explicit(
 
 def configure_simulation(
     pdb_file: str,
-    top_file: str,
+    top_file: Optional[str],
     solvent_type: str,
     gpu_index: int,
     dt_ps: float,
@@ -99,20 +100,27 @@ def configure_simulation(
 
     # Select implicit or explicit solvent configuration
     if solvent_type == "implicit":
-        handle = configure_amber_implicit
+        sim, coords = configure_amber_implicit(
+            pdb_file,
+            top_file,
+            dt_ps,
+            temperature_kelvin,
+            heat_bath_friction_coef,
+            platform,
+            platform_properties,
+        )
     else:
         assert solvent_type == "explicit"
-        handle = configure_amber_explicit
-
-    sim, coords = handle(
-        pdb_file,
-        top_file,
-        dt_ps,
-        temperature_kelvin,
-        heat_bath_friction_coef,
-        platform,
-        platform_properties,
-    )
+        assert top_file is not None
+        sim, coords = configure_amber_explicit(
+            pdb_file,
+            top_file,
+            dt_ps,
+            temperature_kelvin,
+            heat_bath_friction_coef,
+            platform,
+            platform_properties,
+        )
 
     # Set simulation positions
     if coords.get_coordinates().shape[0] == 1:
