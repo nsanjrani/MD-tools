@@ -4,7 +4,7 @@ import tempfile
 import subprocess
 from pathlib import Path
 import parmed as pmd
-import MDAnalysis as mda
+import MDAnalysis
 
 
 def top_trim(top_file: str):
@@ -62,7 +62,7 @@ def gmx_to_amber(
 
 def strip_water(pdb_file: str, top_file: str):
     # remove H from both pdb and top
-    mda_u = mda.Universe(pdb_file)
+    mda_u = MDAnalysis.Universe(pdb_file)
     no_sol = mda_u.select_atoms("not resname WAT")
     no_sol.write(pdb_file)
 

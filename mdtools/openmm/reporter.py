@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 from typing import Optional, List
 import MDAnalysis
+from MDAnalysis.analysis import distances, rms
 from mdtools.analysis.order_parameters import fraction_of_contacts
 
 
@@ -73,12 +74,12 @@ class OfflineReporter:
         self,
         file: str,
         reportInterval: int,
+        frames_per_h5: int = 0,
         wrap_pdb_file: Optional[str] = None,
         reference_pdb_file: Optional[str] = None,
         openmm_selection: List[str] = ["CA"],
         mda_selection: str = "protein and name CA",
         threshold: float = 8.0,
-        frames_per_h5: int = 0,
         contact_map: bool = True,
         point_cloud: bool = True,
         fraction_of_contacts: bool = True,
@@ -159,13 +160,11 @@ class OfflineReporter:
         if self.wrap is not None:
             positions = self.wrap(positions)
 
-        rmsd = MDAnalysis.analysis.rms.rmsd(
-            positions, self._reference_positions, superposition=True
-        )
+        rmsd = rms.rmsd(positions, self._reference_positions, superposition=True)
         self._rmsd.append(rmsd)
 
     def _compute_contact_map(self, positions):
-        contact_map = MDAnalysis.analysis.distances.contact_matrix(
+        contact_map = distances.contact_matrix(
             positions, self._threshold, returntype="sparse"
         )
         return contact_map
