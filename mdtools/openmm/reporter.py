@@ -1,7 +1,8 @@
 import h5py
 import numpy as np
-from typing import Optional
+from typing import Optional, List
 import MDAnalysis
+from mdtools.analysis.order_parameters import fraction_of_contacts
 
 
 def write_contact_map(h5_file: h5py.File, rows, cols):
@@ -29,6 +30,12 @@ def write_contact_map(h5_file: h5py.File, rows, cols):
 def write_rmsd(h5_file: h5py.File, rmsd):
     h5_file.create_dataset(
         "rmsd", data=rmsd, dtype="float16", fletcher32=True, chunks=(1,)
+    )
+
+
+def write_fraction_of_contacts(h5_file: h5py.File, fnc):
+    h5_file.create_dataset(
+        "fnc", data=fnc, dtype="float16", fletcher32=True, chunks=(1,)
     )
 
 
@@ -68,26 +75,38 @@ class OfflineReporter:
         reportInterval: int,
         wrap_pdb_file: Optional[str] = None,
         reference_pdb_file: Optional[str] = None,
-        selection: str = "CA",
+        openmm_selection: List[str] = ["CA"],
+        mda_selection: str = "protein and name CA",
         threshold: float = 8.0,
         frames_per_h5: int = 0,
         contact_map: bool = True,
         point_cloud: bool = True,
+        fraction_of_contacts: bool = True,
     ):
+
+        if fraction_of_contacts and reference_pdb_file is None:
+            raise ValueError(
+                "Computing `fraction_of_contacts` requires `refernce_pdb_file`."
+            )
+        if contact_map and reference_pdb_file is None:
+            raise ValueError("Computing `contact_map` requires `refernce_pdb_file`.")
 
         self._file_idx = 0
         self._base_name = file
         self._report_interval = reportInterval
         self._wrap_pdb_file = wrap_pdb_file
         self._reference_pdb_file = reference_pdb_file
-        self._selection = selection
+        self._openmm_selection = openmm_selection
+        self._mda_selection = mda_selection
         self._threshold = threshold
         self._frames_per_h5 = frames_per_h5
         self._contact_map = contact_map
         self._point_cloud = point_cloud
+        self._fraction_of_contacts = fraction_of_contacts
 
         self._init_batch()
         self._init_reference_positions()
+        self._init_reference_contact_map()
         self._init_wrap()
 
     def _init_reference_positions(self):
@@ -96,17 +115,23 @@ class OfflineReporter:
             self._reference_positions = None
 
         u = MDAnalysis.Universe(self._reference_pdb_file)
-        # Convert openmm atom selection to MDAnalysis
-        selection = f"protein and name {self._selection}"
-        self._reference_positions = u.select_atoms(selection).positions.copy()
+        self._reference_positions = u.select_atoms(self._mda_selection).positions.copy()
+
+    def _init_reference_contact_map(self):
+        if not self._fraction_of_contacts:
+            return
+
+        assert self._reference_pdb_file is not None
+        u = MDAnalysis.Universe(self._reference_pdb_file)
+        reference_positions = u.select_atoms(self._mda_selection).positions.copy()
+        self._reference_contact_map = self._compute_contact_map(reference_positions)
 
     def _init_wrap(self):
         if self._wrap_pdb_file is None:
             self.wrap = None
 
         u = MDAnalysis.Universe(self._wrap_pdb_file)
-        selection = f"protein and name {self._selection}"
-        atoms = u.select_atoms(selection)
+        atoms = u.select_atoms(self._mda_selection)
         self.wrap = wrap(atoms)
 
     def _init_batch(self):
@@ -119,6 +144,9 @@ class OfflineReporter:
 
         if self._reference_pdb_file is not None:
             self._rmsd = []
+
+        if self._fraction_of_contacts:
+            self._fraction_of_contacts_data = []
 
         if self._point_cloud:
             self._point_cloud_data = []
@@ -136,29 +164,41 @@ class OfflineReporter:
         )
         self._rmsd.append(rmsd)
 
-    def _collect_contact_map(self, positions):
-
+    def _compute_contact_map(self, positions):
         contact_map = MDAnalysis.analysis.distances.contact_matrix(
             positions, self._threshold, returntype="sparse"
         )
+        return contact_map
 
+    def _collect_contact_map(self, contact_map):
         # Represent contact map in COO sparse format
         coo = contact_map.tocoo()
         self._rows.append(coo.row.astype("int16"))
         self._cols.append(coo.col.astype("int16"))
+
+    def _collect_fraction_of_contacts(self, contact_map):
+        self._fraction_of_contacts_data.append(
+            fraction_of_contacts(contact_map, self._reference_contact_map)
+        )
 
     def _collect_point_cloud(self, positions):
         self._point_cloud_data.append(positions)
 
     def report(self, simulation, state):
         atom_indices = [
-            a.index for a in simulation.topology.atoms() if a.name == self._selection
+            a.index
+            for a in simulation.topology.atoms()
+            if a.name in self._openmm_selection
         ]
         all_positions = np.array(state.getPositions().value_in_unit(u.angstrom))
         positions = all_positions[atom_indices].astype(np.float32)
 
-        if self._contact_map:
-            self._collect_contact_map(positions)
+        if self._contact_map or self._fraction_of_contacts:
+            contact_map = self._compute_contact_map(positions)
+            if self._contact_map:
+                self._collect_contact_map(contact_map)
+            if self._fraction_of_contacts:
+                self._collect_fraction_of_contacts(contact_map)
 
         if self._point_cloud:
             self._collect_point_cloud(positions)
@@ -185,5 +225,8 @@ class OfflineReporter:
                 # Optionally, write rmsd to the reference state
                 if self._reference_positions is not None:
                     write_rmsd(h5_file, self._rmsd)
+
+                if self._fraction_of_contacts:
+                    write_fraction_of_contacts(h5_file, self._fraction_of_contacts_data)
 
             self._init_batch()
