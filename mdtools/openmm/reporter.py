@@ -114,6 +114,7 @@ class OfflineReporter:
         # Set up for reporting optional RMSD to reference state
         if self._reference_pdb_file is None:
             self._reference_positions = None
+            return
 
         u = MDAnalysis.Universe(self._reference_pdb_file)
         self._reference_positions = u.select_atoms(self._mda_selection).positions.copy()
@@ -130,6 +131,7 @@ class OfflineReporter:
     def _init_wrap(self):
         if self._wrap_pdb_file is None:
             self.wrap = None
+            return
 
         u = MDAnalysis.Universe(self._wrap_pdb_file)
         atoms = u.select_atoms(self._mda_selection)
