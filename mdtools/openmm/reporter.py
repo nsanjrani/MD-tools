@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 from typing import Optional, List
+import simtk.unit as u
 import MDAnalysis
 from MDAnalysis.analysis import distances, rms
 from mdtools.analysis.order_parameters import fraction_of_contacts
@@ -116,16 +117,18 @@ class OfflineReporter:
             self._reference_positions = None
             return
 
-        u = MDAnalysis.Universe(self._reference_pdb_file)
-        self._reference_positions = u.select_atoms(self._mda_selection).positions.copy()
+        mda_u = MDAnalysis.Universe(self._reference_pdb_file)
+        self._reference_positions = mda_u.select_atoms(
+            self._mda_selection
+        ).positions.copy()
 
     def _init_reference_contact_map(self):
         if not self._fraction_of_contacts:
             return
 
         assert self._reference_pdb_file is not None
-        u = MDAnalysis.Universe(self._reference_pdb_file)
-        reference_positions = u.select_atoms(self._mda_selection).positions.copy()
+        mda_u = MDAnalysis.Universe(self._reference_pdb_file)
+        reference_positions = mda_u.select_atoms(self._mda_selection).positions.copy()
         self._reference_contact_map = self._compute_contact_map(reference_positions)
 
     def _init_wrap(self):
@@ -133,8 +136,8 @@ class OfflineReporter:
             self.wrap = None
             return
 
-        u = MDAnalysis.Universe(self._wrap_pdb_file)
-        atoms = u.select_atoms(self._mda_selection)
+        mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
+        atoms = mda_u.select_atoms(self._mda_selection)
         self.wrap = wrap(atoms)
 
     def _init_batch(self):
