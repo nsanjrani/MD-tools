@@ -4,6 +4,7 @@ from typing import List
 from simtk.openmm.app import PDBFile
 import MDAnalysis
 from MDAnalysis.analysis import rms
+from concurrent.futures import ProcessPoolExecutor
 
 
 class ReporterComputation:
@@ -40,11 +41,21 @@ class OfflineReporter:
         self._forces = forces
         self._energies = energies
 
+        # Need for async computations
+        self._executor = ProcessPoolExecutor(max_workers=len(self._computations) + 1)
+        self._futures = []
+
     def _write_report(self):
         h5_fname = f"{self._base_name}_{self._h5_file_count:04}.h5"
         with h5py.File(h5_fname, "w", swmr=False) as f:
             for computation in self._computations:
                 computation.write(f)
+
+    def _block_on_report(self):
+        # Wait for previous report to finish
+        for future in self._futures:
+            future.result()  # Could raise exceptions
+        self._futures = []
 
     def describeNextReport(self, simulation):
         steps = self._report_interval - simulation.currentStep % self._report_interval
@@ -68,14 +79,19 @@ class OfflineReporter:
                 extraParticleIdentifier="EP",
             )
 
-            for computation in self._computations:
-                computation.run(file.name)
+            self._block_on_report()
+
+            self._futures = [
+                self._executor.submit(computation.run, file.name)
+                for computation in self._computations
+            ]
 
             self._frame_count += 1
 
         # Write HDF5 file
         if self._frame_count == self._frames_per_h5:
             self._frame_count = 0
+            self._block_on_report()
             self._write_report()
 
 
