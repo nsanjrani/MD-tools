@@ -1,8 +1,14 @@
 import h5py
 import numpy as np
+from typing import List, Optional
 
 
-def write_contact_map(h5_file: h5py.File, rows, cols):
+def write_contact_map(
+    h5_file: h5py.File,
+    rows: List[np.ndarray],
+    cols: List[np.ndarray],
+    vals: Optional[List[np.ndarray]] = None,
+):
 
     # Helper function to create ragged array
     def ragged(data):
@@ -22,6 +28,17 @@ def write_contact_map(h5_file: h5py.File, rows, cols):
         fletcher32=True,
         chunks=(1,) + data.shape[1:],
     )
+
+    # Write optional values field for contact map. Could contain CA-distances.
+    if vals is not None:
+        data = ragged(vals)
+        h5_file.create_dataset(
+            "contact_map_values",
+            data=data,
+            dtype="float32",
+            fletcher32=True,
+            chunks=(1,) + data.shape[1:],
+        )
 
 
 def write_point_cloud(h5_file: h5py.File, point_cloud: np.ndarray):
