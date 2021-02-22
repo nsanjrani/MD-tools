@@ -16,15 +16,12 @@ def write_contact_map(
         a[...] = data
         return a
 
-    # Specify variable length arrays
-    dt = h5py.vlen_dtype(np.dtype("int16"))
-
     # list of np arrays of shape (2 * X) where X varies
     data = ragged([np.concatenate(row_col) for row_col in zip(rows, cols)])
     h5_file.create_dataset(
         "contact_map",
         data=data,
-        dtype=dt,
+        dtype=h5py.vlen_dtype(np.dtype("int16")),
         fletcher32=True,
         chunks=(1,) + data.shape[1:],
     )
