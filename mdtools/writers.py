@@ -35,7 +35,7 @@ def write_contact_map(
         h5_file.create_dataset(
             "contact_map_values",
             data=data,
-            dtype="float32",
+            dtype=h5py.vlen_dtype(np.dtype("float32")),
             fletcher32=True,
             chunks=(1,) + data.shape[1:],
         )
