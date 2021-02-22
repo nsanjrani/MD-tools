@@ -114,7 +114,7 @@ class RMSDReporter(ReporterComputation):
         )
         self._rmsds = []
 
-    def report(self, pdb_file: str):
+    def run(self, pdb_file: str):
         positions = (
             MDAnalysis.Universe(pdb_file).select_atoms(self.selection).positions()
         )
