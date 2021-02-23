@@ -12,6 +12,8 @@ AMINO_ACID_MAP = {
     "GLU": 7,
     "GLY": 8,
     "HIS": 9,
+    "HIE": 9,  # HIS, HIE, HID are the same
+    "HID": 9,  # residue with different protonation
     "ILE": 10,
     "LEU": 11,
     "LYS": 12,
