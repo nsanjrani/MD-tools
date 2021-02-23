@@ -2,6 +2,36 @@ import h5py
 import numpy as np
 from typing import List, Optional
 
+AMINO_ACID_MAP = {
+    "ALA": 1,
+    "ARG": 2,
+    "ASN": 3,
+    "ASP": 4,
+    "CYS": 5,
+    "GLN": 6,
+    "GLU": 7,
+    "GLY": 8,
+    "HIS": 9,
+    "ILE": 10,
+    "LEU": 11,
+    "LYS": 12,
+    "MET": 13,
+    "PHE": 14,
+    "PRO": 15,
+    "SER": 16,
+    "THR": 17,
+    "TRP": 18,
+    "TYR": 19,
+    "VAL": 20,
+}
+
+
+def write_aminoacid_int_seq(h5_file: h5py.File, residues: List[str]):
+    data = np.array([AMINO_ACID_MAP[r] for r in residues], dtype="int8")
+    h5_file.create_dataset(
+        "aminoacids", data=data, dtype="int8", fletcher32=True, chunks=(1,)
+    )
+
 
 def write_contact_map(
     h5_file: h5py.File,
@@ -57,10 +87,4 @@ def write_rmsd(h5_file: h5py.File, rmsd):
 def write_fraction_of_contacts(h5_file: h5py.File, fnc):
     h5_file.create_dataset(
         "fnc", data=fnc, dtype="float16", fletcher32=True, chunks=(1,)
-    )
-
-
-def write_aminoacid_int_seq(h5_file: h5py.File, residue_ints: np.ndarray):
-    h5_file.create_dataset(
-        "aminoacids", data=residue_ints, dtype="int8", fletcher32=True, chunks=(1,)
     )
