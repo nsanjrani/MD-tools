@@ -58,3 +58,9 @@ def write_fraction_of_contacts(h5_file: h5py.File, fnc):
     h5_file.create_dataset(
         "fnc", data=fnc, dtype="float16", fletcher32=True, chunks=(1,)
     )
+
+
+def write_aminoacid_int_seq(h5_file: h5py.File, residue_ints: np.ndarray):
+    h5_file.create_dataset(
+        "aminoacids", data=residue_ints, dtype="int8", fletcher32=True, chunks=(1,)
+    )
