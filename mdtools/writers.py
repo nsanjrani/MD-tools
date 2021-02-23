@@ -29,7 +29,7 @@ AMINO_ACID_MAP = {
 def write_aminoacid_int_seq(h5_file: h5py.File, residues: List[str]):
     data = np.array([AMINO_ACID_MAP[r] for r in residues], dtype="int8")
     h5_file.create_dataset(
-        "aminoacids", data=data, dtype="int8", fletcher32=True, chunks=(1,)
+        "amino_acids", data=data, dtype="int8", fletcher32=True, chunks=(1,)
     )
 
 
