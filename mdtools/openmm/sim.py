@@ -100,8 +100,12 @@ def configure_simulation(
         platform = omm.Platform_getPlatformByName("CUDA")
         platform_properties = {"DeviceIndex": str(gpu_index), "CudaPrecision": "mixed"}
     except Exception:
-        platform = omm.Platform_getPlatformByName("OpenCL")
-        platform_properties = {"DeviceIndex": str(gpu_index)}
+        try:
+            platform = omm.Platform_getPlatformByName("OpenCL")
+            platform_properties = {"DeviceIndex": str(gpu_index)}
+        except:
+            platform = omm.Platform_getPlatformByName("CPU")
+            platform_properties = {}
 
     # Select implicit or explicit solvent configuration
     if solvent_type == "implicit":
