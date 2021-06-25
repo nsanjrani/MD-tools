@@ -80,9 +80,10 @@ def write_point_cloud(h5_file: h5py.File, point_cloud: np.ndarray):
     )
 
 
+# rmsd can be normal (protein-ligand or just protein depending on input pdb), the protein or for the ligand 
 def write_rmsd(h5_file: h5py.File, rmsd):
     h5_file.create_dataset(
-        "rmsd", data=rmsd, dtype="float16", fletcher32=True, chunks=(1,)
+        'rmsd', data=rmsd, dtype="float16", fletcher32=True, chunks=(1,)
     )
 
 
@@ -90,3 +91,6 @@ def write_fraction_of_contacts(h5_file: h5py.File, fnc):
     h5_file.create_dataset(
         "fnc", data=fnc, dtype="float16", fletcher32=True, chunks=(1,)
     )
+
+def write_heavy_atom_contacts(h5_file: h5py.File, heavy_atom_contacts):
+    h5_file.create_dataset("heavy_atom_contacts", data=heavy_atom_contacts, dtype="float16", fletcher32=True, chunks=(1,))
