@@ -43,26 +43,23 @@ class OfflineReporter:
         wrap_pdb_file: Optional[str] = None,
         reference_pdb_file: Optional[str] = None,
         # change to CA or ligand too?
-        openmm_selection: List[str] = ["CA", "LIG"],
+        openmm_selection: List[str] = ["CA"],
         # TODO: change this to just name CA and ligand ie not protein? protein and ligand?
-        mda_selection: str = "(protein and name CA) or resname LIG",
-        #mda_ligand_selection: str = "not protein and not water",
-        #mda_ligand_selection: str = "resname LIG", #TODO: need to add these to run_openmm.py and also to the config file in this directory
-        #mda_protein_selection: str = "protein and name CA", #TODO: need to add these to run_openmm.py and also to the config file in this directory
+        mda_selection: str = "protein and name CA",
+        mda_lig_selection: str = "resname LIG and not name H*",
         threshold: float = 8.0, # number of angstroms that defines a contact
         contact_map: bool = False,
         point_cloud: bool = False,
         fraction_of_contacts: bool = False,
-        heavy_atom_contacts: bool = True,
-        #ligand_protein_rmsd: bool = True # TODO: need to add these to run_openmm.py and also to the config file in this directory
+        heavy_atom_contacts: bool = True
     ):
 
         if fraction_of_contacts and reference_pdb_file is None:
             raise ValueError(
-                "Computing `fraction_of_contacts` requires `refernce_pdb_file`."
+                "Computing `fraction_of_contacts` requires `reference_pdb_file`."
             )
         if contact_map and reference_pdb_file is None:
-            raise ValueError("Computing `contact_map` requires `refernce_pdb_file`.")
+            raise ValueError("Computing `contact_map` requires `reference_pdb_file`.")
 
         self._file_idx = 0
         self._base_name = file
@@ -71,18 +68,17 @@ class OfflineReporter:
         self._reference_pdb_file = reference_pdb_file
         self._openmm_selection = openmm_selection
         self._mda_selection = mda_selection
-        #self._mda_ligand_selection = mda_ligand_selection
-        #self._mda_protein_selection = mda_protein_selection
+        self._mda_lig_selection = mda_lig_selection
         self._threshold = threshold
         self._frames_per_h5 = frames_per_h5
         self._contact_map = contact_map
         self._point_cloud = point_cloud
         self._fraction_of_contacts = fraction_of_contacts
         self._heavy_atom_contacts = heavy_atom_contacts
-        #self._ligand_protein_rmsd = ligand_protein_rmsd
 
         self._init_batch()
         self._init_reference_positions()
+        self._init_ligand_positions()
         self._init_reference_contact_map()
         self._init_wrap()
 
@@ -94,13 +90,13 @@ class OfflineReporter:
 
         mda_u = MDAnalysis.Universe(self._reference_pdb_file)
 
-        #if self._ligand_protein_rmsd:
-            #self._reference_positions_lig = mda_u.select_atoms(self._mda_ligand_selection).positions.copy()
-            #self._reference_positions_prot = mda_u.select_atoms(self._mda_protein_selection).positions.copy()
-        #else:
         self._reference_positions = mda_u.select_atoms(
             self._mda_selection
         ).positions.copy()
+
+    def _init_ligand_reference_positions(self):
+        u = MDAnalysis.Universe(self._reference_pdb_file)
+        self._ref_lig_positions = u.select_atoms(self._mda_lig_selection).indices.copy()
 
     def _init_reference_contact_map(self):
         if not self._fraction_of_contacts:
@@ -129,9 +125,6 @@ class OfflineReporter:
             self._rows, self._cols = [], []
 
         if self._reference_pdb_file is not None:
-            #if self._ligand_protein_rmsd:
-                #self._prot_rmsd = []
-                #self._lig_rmsd = []
             self._rmsd = []
 
         if self._fraction_of_contacts:
@@ -140,7 +133,6 @@ class OfflineReporter:
         if self._point_cloud:
             self._point_cloud_data = []
 
-        # TODO: added
         if self._heavy_atom_contacts:
             self._heavy_atom_contacts_data = []
 
@@ -151,27 +143,14 @@ class OfflineReporter:
     def _collect_rmsd(self, positions):
         if self.wrap is not None:
             positions = self.wrap(positions)
-                
-        #if self._ligand_protein_rmsd:
-            #positions_lig = self.wrap(positions_lig)
-            #positions_prot = self.wrap(positions_prot)
-
-            #prot_rmsd = rms.rmsd(positions_prot, self._reference_positions_prot, superposition=True)
-            #lig_rmsd = rms.rmsd(positions_lig, self._reference_positions_lig, superposition=True)
-
-            #self._prot_rmsd.append(prot_rmsd)
-            #self._lig_rmsd.append(lig_rmsd)
 
         rmsd = rms.rmsd(positions, self._reference_positions, superposition=True)
         self._rmsd.append(rmsd)
     
-    # TODO: check this function, is the wrapping of these positions needed?
+    # TODO: check this function, is the wrapping of these positions needed or would it put them on top of each other?
     def _compute_heavy_atom_contacts(self, positions_lig, positions_prot):
-        #if self.wrap is not None:
-        #    positions_lig = self.wrap(positions_lig)
-        #    positions_prot = self.wrap(positions_prot)
-
-        distance = positions_lig - positions_prot
+        # TODO: do we need to change the threshold? What counts as a contact?
+        distance = distances.distance_array(positions_prot, positions_lig)
         heavy_contacts = contacts.hard_cut_q(distance, self._threshold)
 
         self._heavy_atom_contacts_data.append(heavy_contacts)
@@ -208,16 +187,12 @@ class OfflineReporter:
 
         if self._heavy_atom_contacts:
             # protein atom indices
-            protein_indices = [a.index for a in simulation.topology.atoms() if a.name in ['CA']]
+            protein_positions = positions
 
             # ligand atom indices
-            # TODO: choose resname LIG and not H* to get heavy atom contacts
-            ligand_indices = [a.index for a in simulation.topology.atoms() if a.name in ['LIG']]
+            ligand_positions = all_positions[self._ref_lig_positions]
 
-            protein_position = all_positions[protein_indices]
-            ligand_position = all_positions[ligand_indices]
-
-            self._compute_heavy_atom_contacts(ligand_position, protein_position)
+            self._compute_heavy_atom_contacts(ligand_positions, protein_positions)
 
         if self._contact_map or self._fraction_of_contacts:
             contact_map = self._compute_contact_map(positions)
@@ -250,10 +225,6 @@ class OfflineReporter:
 
                 # Optionally, write rmsd to the reference state
                 if self._reference_positions is not None:
-                    #if self._ligand_protein_rmsd:
-                        #write_rmsd(h5_file, self._lig_rmsd, type="rmsd_lig")
-                        #write_rmsd(h5_file, self._prot_rmsd, type="rmsd_prot")
-                    
                     write_rmsd(h5_file, self._rmsd, type="rmsd")
 
                 if self._fraction_of_contacts:
