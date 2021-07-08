@@ -46,12 +46,12 @@ class OfflineReporter:
         openmm_selection: List[str] = ["CA"],
         # TODO: change this to just name CA and ligand ie not protein? protein and ligand?
         mda_selection: str = "protein and name CA",
-        mda_lig_selection: str = "resname LIG and not name H*",
+        mda_lig_selection: str = "resname BTN and not name H*",
         threshold: float = 8.0, # number of angstroms that defines a contact
         contact_map: bool = False,
         point_cloud: bool = False,
         fraction_of_contacts: bool = False,
-        heavy_atom_contacts: bool = True
+        heavy_atom_contacts: bool = True,
     ):
 
         if fraction_of_contacts and reference_pdb_file is None:
@@ -78,7 +78,7 @@ class OfflineReporter:
 
         self._init_batch()
         self._init_reference_positions()
-        self._init_ligand_positions()
+        self._init_ligand_reference_positions()
         self._init_reference_contact_map()
         self._init_wrap()
 
