@@ -225,7 +225,7 @@ class OfflineReporter:
 
                 # Optionally, write rmsd to the reference state
                 if self._reference_positions is not None:
-                    write_rmsd(h5_file, self._rmsd, type="rmsd")
+                    write_rmsd(h5_file, self._rmsd)
 
                 if self._fraction_of_contacts:
                     write_fraction_of_contacts(h5_file, self._fraction_of_contacts_data)
