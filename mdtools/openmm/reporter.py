@@ -202,7 +202,12 @@ class OfflineReporter:
                 self._collect_fraction_of_contacts(contact_map)
 
         if self._point_cloud:
-            self._collect_point_cloud(positions)
+            # add ligand to point cloud if heavy_atom_contacts (i.e. ligand selection)
+            if self._heavy_atom_contacts:
+                all_positions = np.concatenate([protein_positions, ligand_positions])
+                self._collect_point_cloud(all_positions)
+            else:
+                self._collect_point_cloud(positions)
 
         if self._reference_positions is not None:
             self._collect_rmsd(positions)
