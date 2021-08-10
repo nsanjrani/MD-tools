@@ -112,9 +112,16 @@ class OfflineReporter:
             self.wrap = None
             return
 
-        mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
-        atoms = mda_u.select_atoms(self._mda_selection)
-        self.wrap = wrap(atoms)
+        if (self._heavy_atom_contacts == True) and (self._wrap_pdb_file is not None):
+            mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
+            full_selection = '(' + self._mda_selection + ') or (' + self._mda_lig_selection + ')'
+            atoms = mda_u.select_atoms(full_selection)
+            self.wrap = wrap(atoms)
+
+        else:
+            mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
+            atoms = mda_u.select_atoms(self._mda_selection)
+            self.wrap = wrap(atoms)
 
     def _init_batch(self):
         # Frame counter for writing batches to HDF5
@@ -150,6 +157,13 @@ class OfflineReporter:
     # TODO: check this function, is the wrapping of these positions needed or would it put them on top of each other?
     def _compute_heavy_atom_contacts(self, positions_lig, positions_prot):
         # TODO: do we need to change the threshold? What counts as a contact?
+        if self.wrap is not None:
+            all_positions = np.concatenate([positions_prot, positions_lig])
+            positions = self.wrap(all_positions)
+
+            positions_prot = positions[0:len(positions_prot)]
+            positions_lig = positions[len(positions_prot):]
+
         distance = distances.distance_array(positions_prot, positions_lig)
         heavy_contacts = contacts.hard_cut_q(distance, self._threshold)
 
