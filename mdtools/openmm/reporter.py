@@ -148,7 +148,11 @@ class OfflineReporter:
         return (steps, True, False, False, False, None)
 
     def _collect_rmsd(self, positions):
-        if self.wrap is not None:
+        if (self.wrap is not None) and (self._heavy_atom_contacts):
+            len_only_protein = len(positions) - len(self._ref_lig_positions)
+            positions = self.wrap(positions[0:len_only_protein])
+            
+        elif self.wrap is not None:
             positions = self.wrap(positions)
 
         rmsd = rms.rmsd(positions, self._reference_positions, superposition=True)
