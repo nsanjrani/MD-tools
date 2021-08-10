@@ -33,6 +33,25 @@ def wrap(atoms):
 
     return wrap_nsp10_16
 
+def wrap_lig_prot(atoms):
+    def wrap_nsp10_16(positions):
+        # update the positions
+        atoms.positions = positions
+        # only porting CA into nsp16
+        # TODO: only selecting the protein, does this need to be changed all it does is center the protein https://userguide.mdanalysis.org/stable/examples/transformations/center_protein_in_box.html
+        nsp16 = atoms.segments[0].atoms
+        # wrapping atoms into continous frame pbc box
+        box_edge = nsp16.dimensions[0]
+        box_center = box_edge / 2
+        trans_vec = box_center - np.array(nsp16.center_of_mass())
+        atoms.translate(trans_vec).wrap()
+        trans_vec = box_center - np.array(atoms.center_of_mass())
+        atoms.translate(trans_vec).wrap()
+
+        return atoms.positions
+
+    return wrap_nsp10_16
+
 
 class OfflineReporter:
     def __init__(
@@ -81,6 +100,7 @@ class OfflineReporter:
         self._init_ligand_reference_positions()
         self._init_reference_contact_map()
         self._init_wrap()
+        self._init_lig_wrap()
 
     def _init_reference_positions(self):
         # Set up for reporting optional RMSD to reference state
@@ -112,17 +132,22 @@ class OfflineReporter:
             self.wrap = None
             return
 
-        if (self._heavy_atom_contacts) and (self._wrap_pdb_file is not None):
-            mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
-            full_selection = '(' + self._mda_selection + ') or (' + self._mda_lig_selection + ')'
-            atoms = mda_u.select_atoms(full_selection)
-            self.wrap = wrap(atoms)
-
         else:
             mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
             atoms = mda_u.select_atoms(self._mda_selection)
             self.wrap = wrap(atoms)
 
+    def _init_lig_wrap(self):
+        if self._wrap_pdb_file is None:
+            self.wrap = None
+            return
+
+        elif (self._heavy_atom_contacts) and (self._wrap_pdb_file is not None):
+            mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
+            full_selection = '(' + self._mda_selection + ') or (' + self._mda_lig_selection + ')'
+            atoms = mda_u.select_atoms(full_selection)
+            self.wrap = wrap_lig_prot(atoms)
+        
     def _init_batch(self):
         # Frame counter for writing batches to HDF5
         self._num_frames = 0
@@ -148,11 +173,7 @@ class OfflineReporter:
         return (steps, True, False, False, False, None)
 
     def _collect_rmsd(self, positions):
-        if (self.wrap is not None) and (self._heavy_atom_contacts):
-            len_only_protein = len(positions) - len(self._ref_lig_positions)
-            positions = self.wrap(positions[0:len_only_protein])
-            
-        elif self.wrap is not None:
+        if self.wrap is not None:
             positions = self.wrap(positions)
 
         rmsd = rms.rmsd(positions, self._reference_positions, superposition=True)
