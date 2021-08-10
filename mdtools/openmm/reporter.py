@@ -112,7 +112,7 @@ class OfflineReporter:
             self.wrap = None
             return
 
-        if (self._heavy_atom_contacts == True) and (self._wrap_pdb_file is not None):
+        if (self._heavy_atom_contacts) and (self._wrap_pdb_file is not None):
             mda_u = MDAnalysis.Universe(self._wrap_pdb_file)
             full_selection = '(' + self._mda_selection + ') or (' + self._mda_lig_selection + ')'
             atoms = mda_u.select_atoms(full_selection)
